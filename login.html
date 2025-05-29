@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+<title>Coordinate Calc - Moving Target with Fixed P2 to Target Bearing</title>
+<style>
+ body {
+    font-family: Arial, sans-serif;
+    background-color: #333333;/* #ADD8E6 Light blue color */
+    background-image:
+        url('https://upload.wikimedia.org/wikipedia/commons/e/e8/Bel_logo.jpg'),
+        url('https://www.studyiq.com/articles/wp-content/uploads/2024/04/09123355/Akashteer-System.-1.jpg'),
+        url('https://www.studyiq.com/articles/wp-content/uploads/2025/05/14152747/1200-x-628-2025-05-12T175558.870.jpg'),
+        url('https://imagesvs.oneindia.com/webp/img/2023/02/d4-drone-system-1675242485.jpg'),
+        url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVVkAf7iC2MAToW1zRcpS4cSMJ7Fmawrc8ogCePjHIqjXqYtzd3dt-DMzgrG4RyVAi70g&usqp=CAU');
+
+    background-size: 25% 15%,50% 50%, 50% 50%, 50% 50%, 50% 50%;
+    background-position: top center,top left, top right, bottom left,bottom right;
+    background-repeat: no-repeat,no-repeat, no-repeat, no-repeat, no-repeat;
+    margin: 0px;
+    padding: 0px;
+    font-size: 0.8em;
+    color: #222;
+    /*overflow: hidden;*/
+    height: 100%;
+}
+
+h1 {
+    text-align: center;
+    font-size: 1.8em;
+    margin: 5px 0;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+div {
+    max-width: 250px;
+    margin: 0 auto 10px auto;
+    background: rgba(255,255,255,0.8);
+    padding: 6px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5px;
+}
+label strong {
+    color: rgb(12, 12, 12);
+}
+input {
+    width: 20%;
+    padding: 3px;
+    font-size: 0.8em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+button {
+    width: 50%;
+    padding: 4px;
+    font-size: 0.9em;
+    margin-top: 6px;
+    background: linear-gradient(45deg, #0a90c6, #0a90c6);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+}
+button:hover {
+    background: linear-gradient(45deg, #0a90c6, #0a90c6);
+}
+#buttonContainer {
+    display: flex;
+    gap: 5px;
+}
+#results {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#results h2 {
+    font-size: 0.8em;
+    margin-bottom: 10px;
+    color: #444;
+}
+#alignedResults {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+.target-section {
+    text-align: center;
+    min-width: 100px;
+}
+.target-section h3 {
+    margin-bottom: 5px;
+    font-size: 0.8em;
+}
+.cal{
+    align-items: center;
+    margin-top: 8%;
+}
+.header-values {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.header {
+    font-weight: bold;
+    margin-bottom: 1px;
+}
+.value {
+    margin-bottom: 1px;
+}
+.pair {
+  display: flex;
+  align-items: center; /* vertically align if needed */
+  margin-bottom: 8px; /* space between pairs */
+  gap: 10px; /* space between header and value */
+}
+.header {
+  font-weight: bold; /* optional: emphasize headers */
+}
+
+/* Styles for image labels */
+.image-label {
+    position: absolute;
+    color: rgb(242, 237, 237);
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgb(235, 229, 229);
+    font-size: 1.0em; /* Adjusted font size for visibility */
+    background-color:black; /* Semi-transparent background for readability */
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 10; /* Ensure labels are above other content */
+}
+
+/* Positioning for each label */
+#label1 { top: 0; left: 0; margin-left: 5px; margin-top: 5px;}
+#label2 { top: 0; right: 0; margin-right: 5px; margin-top: 5px;}
+#label3 { left: 0; margin-left: 10px; margin-top: 346px;}
+#label4 {   right: 0; margin-right: 5px; margin-top: 346px;}
+
+
+@media only screen and (max-width: 600px) {
+    body {
+        font-size: 0.9em;
+        background-size: cover;
+        background-position: center;
+    }
+
+    div {
+        max-width: 90%;
+        padding: 10px;
+    }
+
+    input, button {
+        width: 100%;
+        font-size: 1em;
+    }
+
+    #buttonContainer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #alignedResults {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pair {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .image-label {
+        font-size: 0.8em;
+        padding: 4px 6px;
+    }
+}
+
+
+</style>
+</head>
+<body>
+    <div class="cal">
+<h1 style="color: rgb(11, 11, 11);">Coord Calc</h1>
+
+<div id="label1" class="image-label">Akashteer System</div>
+<div id="label2" class="image-label">Missile Launch</div>
+<div id="label3" class="image-label">D4 Drone System</div>
+<div id="label4" class="image-label">Drone Interception</div>
+
+<div class="top">
+    <label><strong>Target Distance from P1 (km)</strong>: <input type="number" id="target_distance" value="505" ></label>
+    <label><strong>Target Bearing from p1(°)</strong>: <input type="number" id="target_bearing" value="45" ></label>
+    <label><strong>Target Elevation from P1 (°): </strong> <input type="number" id="target_elevation" value="5" ></label>
+    <label><strong>P1→P2 Distance (km): </strong> <input type="number" id="p1_to_p2_distance" value="2"></label>
+    <label><strong>P1→P2 Bearing (°):</strong> <input type="number" id="p1_to_p2_bearing" value="50"></label>
+    <label><strong>Target Max Speed (m/s)</strong>: <input type="number" id="target_speed" value="50"></label>
+    <div id="buttonContainer">
+        <button id="startBtn">Start Moving Target</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <button id="downloadBtn">Download Log</button>
+    </div>
+</div>
+
+<div id="results">
+    <h1 style="align-items: center;color: black;">Results</h1>
+        <div class="target-section">
+            <h2>P2 to Target</h2>
+            <div class="pair">
+  <p class="header">Distance (km):</p>
+  <p class="value" id="dist_p2_target"></p>
+</div>
+<div class="pair">
+  <p class="header">Bearing (°):</p>
+  <p class="value" id="bearing_p2_target"></p>
+</div>
+<div class="pair">
+  <p class="header">Elevation (°):</p>
+  <p class="value" id="elevation_p2_target"></p>
+</div>
+<div class="pair">
+  <p class="header">Time (min):</p>
+  <p class="value" id="time_p2"></p>
+</div>
+</div> 
+</div>
+    </div>
+
+<script>
+let intervalId = null;
+let bgInterval = null;
+const logs = [];
+let vx = 0, vy = 0, vz = 0; // Velocity components in km/s
+let targetX = 0, targetY = 0, targetZ = 0; // Position in km
+let lastUpdateTime = null; // For precise position updates
+
+// Store the fixed bearing from P2 to Target
+let fixedBearingP2ToTarget = null;
+
+function getCurrentTimeString() {
+    const now = new Date();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    const ms = now.getMilliseconds().toString().padStart(3, '0');
+    return `${minutes}:${seconds}.${ms}`;
+}
+
+function logCurrentData(distP1, bearP1, elevP1, distP2, bearP2, elevP2) {
+    logs.push({ timeStr: getCurrentTimeString(), distP1, bearP1, elevP1, distP2, bearP2, elevP2 });
+}
+
+function downloadLog() {
+    if (logs.length === 0) {
+        alert('No data to download.');
+        return;
+    }
+    const headerLine = ['Time', 'P1 Range (km)', 'P1 Bearing (°)', 'P1 Elevation (°)', 'P2 Range (km)', 'P2 Bearing (°)', 'P2 Elevation (°)'].join('\t');
+    const logLines = logs.map(e => `${e.timeStr}\t${e.distP1.toFixed(5)}\t${e.bearP1.toFixed(5)}\t${e.elevP1.toFixed(5)}\t${e.distP2.toFixed(5)}\t${e.bearP2.toFixed(5)}\t${e.elevP2.toFixed(5)}`);
+    const content = [headerLine, ...logLines].join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'movement_log.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function updateDisplay(current_targetX, current_targetY, current_targetZ) {
+    const p2d = parseFloat(document.getElementById('p1_to_p2_distance').value);
+    const p2b_deg = parseFloat(document.getElementById('p1_to_p2_bearing').value);
+    const p2b_rad = p2b_deg * Math.PI / 180;
+
+    const p2_x = p2d * Math.sin(p2b_rad);
+    const p2_y = p2d * Math.cos(p2b_rad);
+    const p2_z = 0; // P2 is at the same elevation as P1 (0)
+
+    // --- Calculations for P1 to Target ---
+    const dist_p1 = Math.sqrt(current_targetX**2 + current_targetY**2 + current_targetZ**2);
+    let bearing_rad_p1 = Math.atan2(current_targetX, current_targetY); // atan2(x, y) for bearing (North=0, East=90)
+    if (bearing_rad_p1 < 0) bearing_rad_p1 += 2 * Math.PI; // Normalize to 0-2PI
+    const bearing_deg_p1 = bearing_rad_p1 * 180 / Math.PI;
+    const horiz_dist_p1 = Math.sqrt(current_targetX**2 + current_targetY**2);
+    const elev_deg_p1 = Math.atan2(current_targetZ, horiz_dist_p1) * 180 / Math.PI;
+
+    // --- Calculations for P2 to Target ---
+    const dx_p2 = current_targetX - p2_x;
+    const dy_p2 = current_targetY - p2_y;
+    const dz_p2 = current_targetZ - p2_z;
+
+    const dist_p2 = Math.sqrt(dx_p2**2 + dy_p2**2 + dz_p2**2);
+    // Use the fixed bearing instead of recalculating
+    const bearing_deg_p2 = fixedBearingP2ToTarget;
+    const horiz_dist_p2 = Math.sqrt(dx_p2**2 + dy_p2**2);
+    const elev_deg_p2 = Math.atan2(dz_p2, horiz_dist_p2) * 180 / Math.PI;
+
+    const nowStr = getCurrentTimeString();
+
+    // Update input fields at the top with current P1 values
+    document.getElementById('target_distance').value = dist_p1.toFixed(2);
+    document.getElementById('target_bearing').value = bearing_deg_p1.toFixed(2);
+    document.getElementById('target_elevation').value = elev_deg_p1.toFixed(2);
+
+    // Update P2 results section
+    document.getElementById('dist_p2_target').textContent = dist_p2.toFixed(2);
+    document.getElementById('bearing_p2_target').textContent = bearing_deg_p2.toFixed(2);
+    document.getElementById('elevation_p2_target').textContent = elev_deg_p2.toFixed(2);
+    document.getElementById('time_p2').textContent = nowStr;
+
+    // Log all current data
+    logCurrentData(dist_p1, bearing_deg_p1, elev_deg_p1, dist_p2, bearing_deg_p2, elev_deg_p2);
+}
+
+function start() {
+    // Get initial values from the input fields
+    const initial_td = parseFloat(document.getElementById('target_distance').value);
+    const initial_tb_deg = parseFloat(document.getElementById('target_bearing').value);
+    const initial_te_deg = parseFloat(document.getElementById('target_elevation').value);
+    const p2d = parseFloat(document.getElementById('p1_to_p2_distance').value);
+    const p2b_deg = parseFloat(document.getElementById('p1_to_p2_bearing').value);
+    const p2b_rad = p2b_deg * Math.PI / 180;
+
+    // Calculate initial P2 position
+    const p2_x = p2d * Math.sin(p2b_rad);
+    const p2_y = p2d * Math.cos(p2b_rad);
+    const p2_z = 0;
+
+    // Convert bearing and elevation to radians
+    const initial_tb_rad = initial_tb_deg * Math.PI / 180;
+    const initial_te_rad = initial_te_deg * Math.PI / 180;
+
+    // Set initial target coordinates (P1 is at 0,0,0)
+    const initial_horizontal_projection = initial_td * Math.cos(initial_te_rad);
+    targetX = initial_horizontal_projection * Math.sin(initial_tb_rad);
+    targetY = initial_horizontal_projection * Math.cos(initial_tb_rad);
+    targetZ = initial_td * Math.sin(initial_te_rad); // Initial altitude
+
+    // Calculate and store initial P2 to Target bearing
+    const dx_p2_initial = targetX - p2_x;
+    const dy_p2_initial = targetY - p2_y;
+    const initial_bearing_rad = Math.atan2(dx_p2_initial, dy_p2_initial);
+    let initial_bearing_deg = initial_bearing_rad * 180 / Math.PI;
+    if (initial_bearing_deg < 0) initial_bearing_deg += 360;
+
+    fixedBearingP2ToTarget = initial_bearing_deg;
+
+    // --- IMPORTANT CHANGE HERE ---
+    // Define the desired target speed in KM/S directly based on your requirements
+    const target_speed_km_per_sec = 50; // km/sec
+
+    // Calculate velocity components based on the target's total speed (50 km/sec)
+    const horizontal_speed_component = target_speed_km_per_sec * Math.cos(initial_te_rad);
+    vx = horizontal_speed_component * Math.sin(initial_tb_rad);
+    vy = horizontal_speed_component * Math.cos(initial_tb_rad);
+    vz = -0.05; // small descent or ascent rate, can be adjusted
+
+    // Reset last update time for precise delta time calculation
+    lastUpdateTime = Date.now();
+
+    if (intervalId) clearInterval(intervalId);
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled = false;
+
+    // Choose interval: 100ms for 5km change per update
+    const intervalMs = 100; // Change to 1000 for 1-sec updates
+
+    intervalId = setInterval(() => {
+        const now = Date.now();
+        const deltaTime = (now - lastUpdateTime) / 1000; // seconds
+        lastUpdateTime = now;
+
+        // Update position based on velocity
+        targetX += vx * deltaTime;
+        targetY += vy * deltaTime;
+        targetZ += vz * deltaTime;
+
+        updateDisplay(targetX, targetY, targetZ);
+    }, intervalMs);
+
+    // Initial display
+    updateDisplay(targetX, targetY, targetZ);
+}
+
+function stop() {
+    clearInterval(intervalId);
+    clearInterval(bgInterval);
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('stopBtn').addEventListener('click', stop);
+document.getElementById('downloadBtn').addEventListener('click', downloadLog);
+</script>
+</body>
+</html>
